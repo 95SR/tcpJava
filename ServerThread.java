@@ -1,4 +1,4 @@
-package server;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -7,23 +7,20 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
 
-
 public class ServerThread extends Thread {
-    //소켓을 관리하는 클래스
-    //추가,제거,메시지 보내기
 
-    //define fields
+    // define fields
     public InputStream instream;
     public OutputStream outstream;
     public BufferedReader br;
     public PrintWriter writer;
     public String userName;
-    
+    public Socket socket;
 
-
-    //create constructor
-    public ServerThread(Socket socket){
+    // create constructor
+    public ServerThread(Socket csocket) {
         try {
+            socket = csocket;
             instream = socket.getInputStream();
             br = new BufferedReader(new InputStreamReader(instream));
 
@@ -36,26 +33,36 @@ public class ServerThread extends Thread {
 
     }
 
-
-    //run
+    // run
     @Override
     public void run() {
-        
 
         try {
-            this.userName = br.readLine(); 
-        SocketManager sm = new SocketManager();
-        sm.addSocket(this);
-        String fromClient;
-        
-            do {
+            this.userName = br.readLine();
+            SocketManager.sendMessage(this, this.userName + " has entered the chat room", true);
 
-                fromClient= br.readLine();
-                
-                sm.sendMessage(this, fromClient);
-                
-            } while (!fromClient.equals("bye"));
+            // SocketManager sm = new SocketManager();
+
+            SocketManager.addSocket(this);
+            System.out.println("added");
+            String fromClient;
+
+
+            while(true){
+                fromClient = br.readLine();
+                if(fromClient.equals("bye")){
+                    SocketManager.removeSocket(this);
+                    break;
+
+                }
+
+                SocketManager.sendMessage(this, fromClient);
+            }
+
+           
+
             
+
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
